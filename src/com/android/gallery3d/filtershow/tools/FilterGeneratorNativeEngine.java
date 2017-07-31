@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -27,33 +27,49 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.android.gallery3d.filtershow.filters;
+package com.android.gallery3d.filtershow.tools;
 
-import com.android.gallery3d.filtershow.editors.EditorDualCamSketch;
+import java.io.File;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Point;
+import android.util.Log;
 
-public class FilterDualCamSketchRepresentation extends FilterDualCamBasicRepresentation {
-    private static final String LOGTAG = "FilterDualCamSketchRepresentation";
-
-    public FilterDualCamSketchRepresentation(String name, int nameResId) {
-        super(name, 0, 0, 0);
-        setFilterType(FilterRepresentation.TYPE_DUALCAM);
-        setFilterClass(ImageFilterDualCamSketch.class);
-        setEditorId(EditorDualCamSketch.ID);
-        setTextId(nameResId);
-        setShowParameterValue(false);
+public class FilterGeneratorNativeEngine {
+    private static final String TAG = "FilterGeneratorNativeEngine";
+    static {
+        try {
+            System.loadLibrary("jni_filtergenerator");
+            mLibLoaded = true;
+            Log.v(TAG, "successfully loaded filter generator lib");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "failed to load filter generator lib");
+            mLibLoaded = false;
+        }
     }
 
-    @Override
-    public FilterRepresentation copy() {
-        FilterDualCamSketchRepresentation representation =
-                new FilterDualCamSketchRepresentation(getName(), 0);
-        copyAllParameters(representation);
-        return representation;
+    private static boolean mLibLoaded;
+
+    private static FilterGeneratorNativeEngine mInstance;
+
+    private FilterGeneratorNativeEngine() {}
+
+    public static void createInstance() {
+        if(mInstance == null) {
+            mInstance = new FilterGeneratorNativeEngine();
+        }
     }
 
-    @Override
-    public String toString() {
-        return "dualcam - point: " + getPoint().toString();
+    public static FilterGeneratorNativeEngine getInstance() {
+        createInstance();
+        return mInstance;
     }
+
+    public boolean isLibLoaded() {
+        return mLibLoaded;
+    }
+
+    native public boolean filterGeneratorProcess (Bitmap srcRGBA, Bitmap refRGBA, Bitmap dstRGBA);
+
 }
